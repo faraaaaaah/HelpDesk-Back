@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -38,4 +39,15 @@ public class TicketController {
     public void deleteTicket(@PathVariable Long id) {
         ticketService.delete(id);
     }
+    @GetMapping("/percentages")
+    public ResponseEntity<Map<String, Double>> getTicketPercentages() {
+        Map<String, Double> percentages = ticketService.calculateTicketPercentages();
+        return ResponseEntity.ok().body(percentages);
+    }
+    @GetMapping("/average/{year}")
+    public ResponseEntity<Map<String, Double>> getMonthlyAverages(@PathVariable int year) {
+        Map<String, Double> averages = ticketService.calculateMonthlyAverages(year);
+        return ResponseEntity.ok(averages);
+    }
+
 }

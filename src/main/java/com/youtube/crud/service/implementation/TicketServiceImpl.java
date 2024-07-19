@@ -9,7 +9,11 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.*;
+import java.time.ZoneId;
+
 
 @Service
 public class TicketServiceImpl implements TicketService {
@@ -64,5 +68,77 @@ public class TicketServiceImpl implements TicketService {
     public void delete(Long id) {
         ticketRepo.findById(id).ifPresent(ticket -> ticketRepo.delete(ticket));
     }
+    @Override
+    public Map<String, Double> calculateTicketPercentages() {
+        List<Ticket> tickets = ticketRepo.findAll();
 
+        double totalTickets = tickets.size();
+        double treatedCount = 0;
+        double inProgressCount = 0;
+        double draftCount = 0;
+        for (Ticket ticket : tickets) {
+            switch (ticket.getStatus()) {
+                case TREATED:
+                    treatedCount++;
+                    break;
+                case IN_PROGRESS:
+                    inProgressCount++;
+                    break;
+                case DRAFT:
+                    draftCount++;
+                    break;
+                // Add more cases as needed
+            }
+        }
+        Map<String, Double> percentages = new HashMap<>();
+        percentages.put("treated", (treatedCount / totalTickets) * 100);
+        percentages.put("inProgress", (inProgressCount / totalTickets) * 100);
+        percentages.put("draft", (draftCount / totalTickets) * 100);
+
+        return percentages;
+    }
+
+    public double calculateMonthlyAverageForMonth(int year, int month) {
+        List<Ticket> allTickets = getAllTickets();
+        if (allTickets.isEmpty()) {
+            return 0.0;
+        }
+
+        long ticketsThisMonth = allTickets.stream()
+                .filter(ticket -> {
+                    LocalDate ticketDate = ticket.getDate();
+                    return ticketDate.getYear() == year && ticketDate.getMonthValue() == month;
+                })
+                .count();
+
+        // Calculate average only if there are tickets for the given month
+        if (ticketsThisMonth == 0) {
+            return 0.0;
+        }
+
+        // Calculate the average
+        YearMonth yearMonth = YearMonth.of(year, month);
+        return ticketsThisMonth / (double) yearMonth.lengthOfMonth();
+    }
+    public Map<String, Double> calculateMonthlyAverages(int year) {
+        Map<String, Double> averages = new LinkedHashMap<>();
+
+        // Loop through each month of the year
+        for (int month = 1; month <= 12; month++) {
+            YearMonth yearMonth = YearMonth.of(year, month);
+            double average = calculateAverageForMonth(yearMonth);
+            averages.put(yearMonth.getMonth().toString(), average);
+        }
+
+        return averages;
+    }
+    public double calculateAverageForMonth(YearMonth yearMonth) {
+        List<Ticket> tickets = ticketRepo.findByYearAndMonth(yearMonth.getYear(), yearMonth.getMonthValue());
+        if (tickets.isEmpty()) {
+            return 0.0;
+        }
+
+        // Calculate average based on ticket count
+        return (double) tickets.size() / yearMonth.lengthOfMonth();
+    }
 }

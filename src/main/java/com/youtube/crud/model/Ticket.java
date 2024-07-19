@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -21,7 +22,8 @@ public class Ticket {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User assigned;
-    private Date date;
+    private LocalDate date;
     @Enumerated(EnumType.STRING)
     private Status status;
 }
+
